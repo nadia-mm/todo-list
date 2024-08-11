@@ -17,26 +17,23 @@ public class TodoService {
 
     private static  final Logger LOGGER = LoggerFactory.getLogger(TodoService.class);
 
-    public Response<Todo> findTodoById(long id) {
-        LOGGER.info("TodoService - Retrieving Todo with id {}.",id);
-        Todo todo =  todos.findById(id)
-                .orElseThrow(() -> new TodoException("Todo with id "+id+" not found."));
-
-        return new Response<>(true, todo, "Todo #" + id + " found.");
+    public Todo findTodoById(long id) {
+        LOGGER.info("TodoService - Retrieving Todo #{}.",id);
+        return todos.findById(id)
+                .orElseThrow(() -> new TodoException("Todo #"+id+" not found."));
     }
-    public Response<Todo> saveTodo(Todo todo){
-        Todo savedTodo = todos.save(todo);
-        LOGGER.info("TodoService - Saving Todo with id {}.",savedTodo.getId());
-        return new Response<>(true, savedTodo, "Todo with id "+savedTodo.getId() + ": "+ todo.getTitle() + " saved successfully.");
+    public Todo saveTodo(Todo todo){
+        LOGGER.info("TodoService - Saving Todo.");
+        return  todos.save(todo);
     }
 
-    public Response<Todo> removeTodoById(long id){
-        LOGGER.info("TodoService - Removing Todo with id {}.",id);
+    public boolean removeTodoById(long id){
+        LOGGER.info("TodoService - Removing Todo #{}.",id);
         if (!todos.existsById(id)) {
-            return new Response<>(false, "Todo with id " + id + " not found.");
+            return  false;
         }
         todos.deleteById(id);
-        return new Response<>(true, "Todo with id " + id + " removed successfully.");
+        return true;
     }
 
    public List<Todo> findAllTodos() {

@@ -40,7 +40,7 @@ The base URL for the API is:
     - `id` (path parameter): The ID of the todo item.
 - **Request**: No request body required.
 - **Response**:
-    - **Status Code**: `200 OK`
+    - **Status Code**: `200 OK` (if found)
     - **Body**:
       ```json
       {
@@ -72,7 +72,7 @@ The base URL for the API is:
       }
       ```
 - **Response**:
-    - **Status Code**: `200 OK`
+    - **Status Code**: `200 OK`  (if found)
     - **Body**:
       ```json
       {
@@ -106,7 +106,7 @@ The base URL for the API is:
       }
       ```
 - **Response**:
-    - **Status Code**: `200 OK`
+    - **Status Code**: `200 OK` (if successful)
     - **Body**:
       ```json
       {
@@ -132,7 +132,7 @@ The base URL for the API is:
     - `id` (path parameter): The ID of the todo item.
 - **Request**: No request body required.
 - **Response**:
-    - **Status Code**: `200 OK`
+    - **Status Code**: `200 OK` (if successful - in this case I don't use `204`)
     - **Body**:
       ```json
       {

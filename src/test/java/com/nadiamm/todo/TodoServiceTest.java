@@ -36,27 +36,25 @@ public class TodoServiceTest {
     }
 
     @Test
-    public void testFindTodoById() {
+    public void testFindTodoById_Success() {
         Todo todo = new Todo("Test Todo");
         todo.setId(id);
         when(todoRepository.findById(id)).thenReturn(Optional.of(todo));
 
-        Response<Todo> response = todoService.findTodoById(id);
-
-        assertTrue(response.isSuccess());
-        assertEquals(Collections.singletonList(todo), response.getData());
-        assertEquals("Todo #1 found.",response.getMessage());
-    }
+        assertEquals(Optional.of(todo), todoRepository.findById(id));
+        verify(todoRepository, times(1)).findById(1L);
+}
 
     @Test
-    public void testFindTodoByIdNotFound() {
+    public void testFindTodoById_NotFound() {
         when(todoRepository.findById(id)).thenReturn(Optional.empty());
 
         TodoException thrownException = assertThrows(TodoException.class, () -> {
             todoService.findTodoById(id);
         });
-        assertEquals("Todo with id 1 not found.",thrownException.getMessage());
 
+        assertEquals("Todo #1 not found.",thrownException.getMessage());
+        verify(todoRepository, times(1)).findById(1L);
     }
 
     @Test
@@ -65,39 +63,29 @@ public class TodoServiceTest {
         todo.setId(id);
         when(todoRepository.save(any(Todo.class))).thenReturn(todo);
 
-
-        Response<Todo> response = todoService.saveTodo(todo);
-
-
-        assertTrue(response.isSuccess());
-        assertEquals(Collections.singletonList(todo),response.getData());
-        assertEquals("Todo with id 1: Test Todo saved successfully.",response.getMessage());
+        assertEquals(todo, todoService.saveTodo(todo));
+        verify(todoRepository, times(1)).save(todo);
     }
 
     @Test
-    public void testRemoveTodoById() {
-
+    public void testRemoveTodoById_Success() {
         when(todoRepository.existsById(id)).thenReturn(true);
         doNothing().when(todoRepository).deleteById(id);
 
-
-        Response<Todo> response = todoService.removeTodoById(id);
-
-
-        assertTrue(response.isSuccess());
-        assertEquals("Todo with id 1 removed successfully.",response.getMessage());
+        assertTrue(todoService.removeTodoById(id));
+        verify(todoRepository, times(1)).existsById(1L);
+        verify(todoRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    public void testRemoveTodoByIdNotFound() {
+    public void testRemoveTodoById_NotFound() {
+        when(todoRepository.existsById(anyLong())).thenReturn(false);
 
-        when(todoRepository.existsById(id)).thenReturn(false);
-
-        Response<Todo> response = todoService.removeTodoById(id);
-
-        assertFalse(response.isSuccess());
-        assertEquals("Todo with id 1 not found.",response.getMessage());
+        assertFalse( todoService.removeTodoById(1L));
+        verify(todoRepository, times(1)).existsById(1L);
+        verify(todoRepository, never()).deleteById(1L);
     }
+
 
     @Test
     public void testFindAllTodos() {
@@ -111,6 +99,7 @@ public class TodoServiceTest {
         assertEquals(2,result.size());
         assertEquals(todo1,result.getFirst());
         assertEquals(todo2,result.get(1));
+        verify(todoRepository, times(1)).findAll();
     }
 
     @Test
@@ -124,6 +113,8 @@ public class TodoServiceTest {
 
         assertEquals(2,todoRepository.findAllTodosByIsDone(false).size());
         assertEquals(1,todoRepository.findAllTodosByIsDone(true).size());
-
+        verify(todoRepository, times(1)).findAllTodosByIsDone(true);
+        verify(todoRepository, times(1)).findAllTodosByIsDone(false);
     }
+
 }

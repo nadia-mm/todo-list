@@ -12,9 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 public class TodoControllerTest {
@@ -29,7 +27,6 @@ public class TodoControllerTest {
     private final String description = "Test Description";
     private final Todo todo = new Todo(title, description);
 
-   Response<Todo> response = new Response<>(true,todo, "Todo found");
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -49,44 +46,91 @@ public class TodoControllerTest {
     }
 
     @Test
-    public void testGetTodoById() {
+    public void testGetTodoById_Success() {
 
-        when(todoService.findTodoById(anyLong())).thenReturn(response);
+        when(todoService.findTodoById(1L)).thenReturn(todo);
 
         ResponseEntity<Response<Todo>> responseEntity = todoController.getTodoById(1L);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
+        assertTrue(Objects.requireNonNull(responseEntity.getBody()).isSuccess());
+        assertEquals(Collections.singletonList(todo), responseEntity.getBody().getData());
+        assertEquals("Todo #1 has been found.", responseEntity.getBody().getMessage());
     }
 
     @Test
-    public void testUpdateTodoById() {
-        when(todoService.saveTodo(any(Todo.class))).thenReturn(response);
+    public void testGetTodoById_NotFound() {
 
+        when(todoService.findTodoById(anyLong())).thenReturn(null);
+
+        ResponseEntity<Response<Todo>> responseEntity = todoController.getTodoById(1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertFalse(Objects.requireNonNull(responseEntity.getBody()).isSuccess());
+        assertEquals("Todo #1 has not been found.", responseEntity.getBody().getMessage());
+        assertEquals(Collections.emptyList(),responseEntity.getBody().getData());
+    }
+
+    @Test
+    public void testUpdateTodoById_Success() {
+        when(todoService.findTodoById(anyLong())).thenReturn(todo);
+        when(todoService.saveTodo(any(Todo.class))).thenReturn(todo);
         ResponseEntity<Response<Todo>> responseEntity = todoController.updateTodoById(1L, todo);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
+        assertTrue(Objects.requireNonNull(responseEntity.getBody()).isSuccess());
+        System.out.println( responseEntity.getBody());
+        assertEquals(Collections.singletonList(todo), responseEntity.getBody().getData());
+        assertEquals("Todo #1 has been updated successfully.", responseEntity.getBody().getMessage());
     }
 
     @Test
+    public void testUpdateTodoById_NotFound() {
+        when(todoService.findTodoById(anyLong())).thenReturn(null);
+        ResponseEntity<Response<Todo>> responseEntity = todoController.updateTodoById(1L, todo);
+
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertFalse(Objects.requireNonNull(responseEntity.getBody()).isSuccess());
+        assertEquals("Todo #1 has not been found.", responseEntity.getBody().getMessage());
+        assertEquals(Collections.emptyList(),responseEntity.getBody().getData());
+    }
+    @Test
     public void testCreateTodo() {
-        when(todoService.saveTodo(any(Todo.class))).thenReturn(response);
+        when(todoService.saveTodo(any(Todo.class))).thenReturn(todo);
 
         ResponseEntity<Response<Todo>> responseEntity = todoController.createTodo(todo);
 
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
+        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+        assertTrue(Objects.requireNonNull(responseEntity.getBody()).isSuccess());
+        assertEquals(Collections.singletonList(todo), responseEntity.getBody().getData());
+        assertEquals("Todo #0 has been created successfully.", responseEntity.getBody().getMessage());
     }
 
     @Test
-    public void testDeleteTodoById() {
-        when(todoService.removeTodoById(anyLong())).thenReturn(response);
+    public void testDeleteTodoById_Success() {
+        when(todoService.findTodoById(anyLong())).thenReturn(todo);
+        when(todoService.removeTodoById(anyLong())).thenReturn(true);
 
         ResponseEntity<Response<Todo>> responseEntity = todoController.removeTodoById(1L);
 
+       // assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
+        assertEquals(Collections.emptyList(), Objects.requireNonNull(responseEntity.getBody()).getData());
+        assertTrue(responseEntity.getBody().isSuccess());
+        assertEquals("Todo #1 has been removed successfully.", responseEntity.getBody().getMessage());
+    }
+
+    @Test
+    public void testDeleteTodoById_NotFound() {
+        when(todoService.findTodoById(anyLong())).thenReturn(null);
+
+        ResponseEntity<Response<Todo>> responseEntity = todoController.removeTodoById(1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals(Collections.emptyList(), Objects.requireNonNull(responseEntity.getBody()).getData());
+        assertFalse(responseEntity.getBody().isSuccess());
+        assertEquals("Todo #1 has not been found.", responseEntity.getBody().getMessage());
+
     }
 
     @Test
@@ -102,9 +146,12 @@ public class TodoControllerTest {
         ResponseEntity<List<Todo>> responseTrue = todoController.getAllTodosByStatus(true);
 
         assertEquals(HttpStatus.OK, responseFalse.getStatusCode());
-        assertEquals(2, responseFalse.getBody().size());
+        assertEquals(2, Objects.requireNonNull(responseFalse.getBody()).size());
+        assertEquals(todos.stream().filter( item -> !item.isDone()).toList(),responseFalse.getBody());
+
 
         assertEquals(HttpStatus.OK, responseTrue.getStatusCode());
-        assertEquals(1, responseTrue.getBody().size());
+        assertEquals(1, Objects.requireNonNull(responseTrue.getBody()).size());
+        assertEquals(todos.stream().filter(Todo::isDone).toList(),responseTrue.getBody());
     }
 }
